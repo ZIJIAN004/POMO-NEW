@@ -53,6 +53,8 @@ def TRAIN(actor_group, epoch, timer_start, logger):
     for data,ref in train_loader:
         # data.shape = (batch_s, TSP_SIZE, 2)            #需要修改，需要先修改数据集，变成TSP_size或者TSP_size+1
         # ref.shape= (batch_s, TSP_SIZE+1)
+        data=data.to(device)
+        ref=ref.to(device)
         
         batch_s = data.size(0)
         episode = episode + batch_s
@@ -181,6 +183,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
 
     # LR STEP, after each epoch
     actor_group.lr_stepper.step()
+
 
 
 
