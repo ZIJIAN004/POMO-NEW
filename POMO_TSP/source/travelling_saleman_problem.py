@@ -71,7 +71,7 @@ class TSP_Dataset__Random(Dataset):
     def __getitem__(self, index):
         #这个是节点真正的生成逻辑，即生成节点数个二维数据，形成图，所以下面就在这里改，还需要生成其他的
         node_xy_data = np.random.rand(self.num_nodes, 2)
-        reference_route=self.solver.solve(node_xy_data)
+        reference_route,_=self.solver.solve(node_xy_data)
         return node_xy_data,reference_route
 
     def __len__(self):
@@ -251,5 +251,6 @@ class GROUP_ENVIRONMENT:
         group_travel_distances = segment_lengths.sum(2)
         # size = (batch, group)
         return group_travel_distances
+
 
 
