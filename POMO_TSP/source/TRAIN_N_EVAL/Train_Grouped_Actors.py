@@ -68,6 +68,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
         group_state_p, reward_p, done_p = env.reset(group_size=group_s_p)  
         actor_group.reset(group_state_p)     
         #Push the model to the state of the partial solution
+        print（ref）
         for i in range(ref.size(1)//2):
             col = ref[:, i] 
             col_unsqueezed = col.unsqueeze(1)
@@ -181,5 +182,6 @@ def TRAIN(actor_group, epoch, timer_start, logger):
 
     # LR STEP, after each epoch
     actor_group.lr_stepper.step()
+
 
 
