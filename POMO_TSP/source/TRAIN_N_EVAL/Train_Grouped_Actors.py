@@ -48,12 +48,12 @@ def TRAIN(actor_group, epoch, timer_start, logger):
     actor_group.train()
 
     train_loader = TSP_DATA_LOADER__RANDOM(num_sample=TRAIN_DATASET_SIZE, num_nodes=TSP_SIZE, batch_size=TRAIN_BATCH_SIZE)
-
+    episode=0
     logger_start = time.time()
     for data,ref in train_loader:
         # data.shape = (batch_s, TSP_SIZE, 2)            #需要修改，需要先修改数据集，变成TSP_size或者TSP_size+1
         # ref.shape= (batch_s, TSP_SIZE+1)
-
+        
         batch_s = data.size(0)
         episode = episode + batch_s
 
@@ -120,7 +120,6 @@ def TRAIN(actor_group, epoch, timer_start, logger):
         # data.shape = (batch_s, TSP_SIZE, 2)
 
         batch_s = data.size(0)
-        episode = episode + batch_s
 
         # Actor Group Move
         ###############################################
@@ -182,4 +181,5 @@ def TRAIN(actor_group, epoch, timer_start, logger):
 
     # LR STEP, after each epoch
     actor_group.lr_stepper.step()
+
 
