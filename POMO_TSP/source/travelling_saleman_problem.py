@@ -80,7 +80,7 @@ class TSP_Dataset__Random(Dataset):
 
 def TSP_collate_fn(batch):
     data_list = [item[0] for item in batch]
-    ref_list = [item[0] for item in batch]
+    ref_list = [item[1] for item in batch]
     data_list = torch.from_numpy(np.stack(data_list)).float()
     ref_list=torch.tensor(ref_list).long()#因为返回的是list而非nparray
     return data_list , ref_list
@@ -251,6 +251,7 @@ class GROUP_ENVIRONMENT:
         group_travel_distances = segment_lengths.sum(2)
         # size = (batch, group)
         return group_travel_distances
+
 
 
 
