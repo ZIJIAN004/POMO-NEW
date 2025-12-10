@@ -80,7 +80,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
         first_action = ref[:, (ref.size(1)//2) : -1] #这个firstmove的逻辑就需要修改了
         group_state_p, reward_p, done_p = env.step(first_action)
 
-        group_prob_list = Tensor(np.zeros((batch_s, group_s_p, 0)),device=device)
+        group_prob_list = torch.zeros((batch_s, group_s_p, 0), device=device)
         while not done_p:
             actor_group.update(group_state_p)
             action_probs = actor_group.get_action_probabilities()
@@ -131,10 +131,10 @@ def TRAIN(actor_group, epoch, timer_start, logger):
         actor_group.reset(group_state)
 
         # First Move is given
-        first_action = np.arange(group_s,device=device)[None, :].expand(batch_s, group_s)
+        first_action = torch.arange(group_s,device=device)[None, :].expand(batch_s, group_s)
         group_state, reward, done = env.step(first_action)
 
-        group_prob_list = Tensor(np.zeros((batch_s, group_s, 0)),device=device)
+        group_prob_list = torch.zeros((batch_s, group_s, 0), device=device)
         while not done:
             actor_group.update(group_state)
             action_probs = actor_group.get_action_probabilities()
@@ -184,6 +184,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
 
     # LR STEP, after each epoch
     actor_group.lr_stepper.step()
+
 
 
 
