@@ -91,59 +91,68 @@ def TSP_collate_fn(batch):
 # STATE
 ####################################
 class STATE:
-
     def __init__(self, seq):
         self.seq = seq
         self.batch_s = seq.size(0)
+        # 【修改1】获取输入数据的设备 (CPU 还是 GPU)
+        self.device = seq.device 
 
         self.current_node = None
 
         # History
         ####################################
         self.selected_count = 0
-        self.available_mask = BoolTensor(np.ones((self.batch_s, TSP_SIZE)))
-        self.ninf_mask = Tensor(np.zeros((self.batch_s, TSP_SIZE)))
-        # shape = (batch_s, TSP_SIZE)
-        self.selected_node_list = LongTensor(np.zeros((self.batch_s, 0)))
-        # shape = (batch_s, selected_count)
+        
+        # 【修改2】全部用 torch.ones/zeros，并指定 device=self.device
+        self.available_mask = torch.ones((self.batch_s, TSP_SIZE), dtype=torch.bool, device=self.device)
+        self.ninf_mask = torch.zeros((self.batch_s, TSP_SIZE), device=self.device)
+        
+        # shape = (batch_s, 0)
+        self.selected_node_list = torch.zeros((self.batch_s, 0), dtype=torch.long, device=self.device)
 
     def move_to(self, selected_node_idx):
         # selected_node_idx.shape = (batch,)
-
         self.current_node = selected_node_idx
 
         # History
         ####################################
         self.selected_count += 1
-        self.available_mask[torch.arange(self.batch_s), selected_node_idx] = False
-        self.ninf_mask[torch.arange(self.batch_s), selected_node_idx] = -np.inf
+        
+        # 【修改3】生成索引时，必须指定 device
+        batch_idx = torch.arange(self.batch_s, device=self.device)
+        
+        self.available_mask[batch_idx, selected_node_idx] = False
+        self.ninf_mask[batch_idx, selected_node_idx] = -float('inf') # 【修改4】用 float('inf') 更纯粹
         self.selected_node_list = torch.cat((self.selected_node_list, selected_node_idx[:, None]), dim=1)
 
 
 class GROUP_STATE:
-
     def __init__(self, group_size, data):
         # data.shape = (batch, group, 2)
         self.batch_s = data.size(0)
         self.group_s = group_size
         self.data = data
+        
+        # 【修改1】获取 device，这是救命稻草
+        self.device = data.device
 
         # History
         ####################################
         self.selected_count = 0
         self.current_node = None
-        # shape = (batch, group)
-        self.selected_node_list = LongTensor(np.zeros((self.batch_s, group_size, 0)))
-        # shape = (batch, group, selected_count)
+        
+        # 【修改2】初始化列表在 GPU 上
+        # shape = (batch, group, 0)
+        self.selected_node_list = torch.zeros((self.batch_s, group_size, 0), dtype=torch.long, device=self.device)
 
         # Status
         ####################################
-        self.ninf_mask = Tensor(np.zeros((self.batch_s, group_size, TSP_SIZE)))
-        # shape = (batch, group, TSP_SIZE)
+        # 【修改3】初始化 Mask 在 GPU 上
+        self.ninf_mask = torch.zeros((self.batch_s, group_size, TSP_SIZE), device=self.device)
 
 
     def move_to(self, selected_idx_mat):
-        # selected_idx_mat.shape = (batch, group)#第一个batch是不同的问题实例，第二个group是不同的起点路径，而在分布式训练中，不通起点组最开始走的应该都一样，直到我们开始整体训练
+        # selected_idx_mat.shape = (batch, group)
 
         # History
         ####################################
@@ -153,9 +162,12 @@ class GROUP_STATE:
 
         # Status
         ####################################
-        batch_idx_mat = torch.arange(self.batch_s)[:, None].expand(self.batch_s, self.group_s)
-        group_idx_mat = torch.arange(self.group_s)[None, :].expand(self.batch_s, self.group_s)
-        self.ninf_mask[batch_idx_mat, group_idx_mat, selected_idx_mat] = -np.inf
+        # 【修改4】这里的 arange 必须加 device，否则无法作为 GPU 张量的索引
+        batch_idx_mat = torch.arange(self.batch_s, device=self.device)[:, None].expand(self.batch_s, self.group_s)
+        group_idx_mat = torch.arange(self.group_s, device=self.device)[None, :].expand(self.batch_s, self.group_s)
+        
+        # 更新 Mask
+        self.ninf_mask[batch_idx_mat, group_idx_mat, selected_idx_mat] = -float('inf')
 
 
 ####################################
@@ -251,6 +263,7 @@ class GROUP_ENVIRONMENT:
         group_travel_distances = segment_lengths.sum(2)
         # size = (batch, group)
         return group_travel_distances
+
 
 
 
