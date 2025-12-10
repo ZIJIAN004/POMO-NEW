@@ -80,7 +80,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
         first_action = ref[:, (ref.size(1)//2) : -1] #这个firstmove的逻辑就需要修改了
         group_state_p, reward_p, done_p = env.step(first_action)
 
-        group_prob_list = Tensor(np.zeros((batch_s, group_s_p, 0)))
+        group_prob_list = Tensor(np.zeros((batch_s, group_s_p, 0)),device=device)
         while not done_p:
             actor_group.update(group_state_p)
             action_probs = actor_group.get_action_probabilities()
@@ -89,8 +89,8 @@ def TRAIN(actor_group, epoch, timer_start, logger):
             # shape = (batch, group)
             group_state_p, reward_p, done_p = env.step(action)
 
-            batch_idx_mat = torch.arange(batch_s)[:, None].expand(batch_s, group_s_p)
-            group_idx_mat = torch.arange(group_s_p)[None, :].expand(batch_s, group_s_p)
+            batch_idx_mat = torch.arange(batch_s,device=device)[:, None].expand(batch_s, group_s_p)
+            group_idx_mat = torch.arange(group_s_p,device=device)[None, :].expand(batch_s, group_s_p)
             chosen_action_prob = action_probs[batch_idx_mat, group_idx_mat, action].reshape(batch_s, group_s_p)
             # shape = (batch, group)
             group_prob_list = torch.cat((group_prob_list, chosen_action_prob[:, :, None]), dim=2)
@@ -120,6 +120,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
         ###############################################
     for data,_ in train_loader:
         # data.shape = (batch_s, TSP_SIZE, 2)
+        data=data.to(device)
 
         batch_s = data.size(0)
 
@@ -130,10 +131,10 @@ def TRAIN(actor_group, epoch, timer_start, logger):
         actor_group.reset(group_state)
 
         # First Move is given
-        first_action = LongTensor(np.arange(group_s))[None, :].expand(batch_s, group_s)
+        first_action = np.arange(group_s,device=device)[None, :].expand(batch_s, group_s)
         group_state, reward, done = env.step(first_action)
 
-        group_prob_list = Tensor(np.zeros((batch_s, group_s, 0)))
+        group_prob_list = Tensor(np.zeros((batch_s, group_s, 0)),device=device)
         while not done:
             actor_group.update(group_state)
             action_probs = actor_group.get_action_probabilities()
@@ -142,8 +143,8 @@ def TRAIN(actor_group, epoch, timer_start, logger):
             # shape = (batch, group)
             group_state, reward, done = env.step(action)
 
-            batch_idx_mat = torch.arange(batch_s)[:, None].expand(batch_s, group_s)
-            group_idx_mat = torch.arange(group_s)[None, :].expand(batch_s, group_s)
+            batch_idx_mat = torch.arange(batch_s,device=device)[:, None].expand(batch_s, group_s)
+            group_idx_mat = torch.arange(group_s,device=device)[None, :].expand(batch_s, group_s)
             chosen_action_prob = action_probs[batch_idx_mat, group_idx_mat, action].reshape(batch_s, group_s)
             # shape = (batch, group)
             group_prob_list = torch.cat((group_prob_list, chosen_action_prob[:, :, None]), dim=2)
@@ -183,6 +184,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
 
     # LR STEP, after each epoch
     actor_group.lr_stepper.step()
+
 
 
 
