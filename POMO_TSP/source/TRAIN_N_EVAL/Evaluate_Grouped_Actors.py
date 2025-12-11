@@ -63,7 +63,7 @@ def EVAL(actor_group, epoch, timer_start, logger):
     else:
         test_loader = TSP_DATA_LOADER__RANDOM(num_sample=TEST_DATASET_SIZE, num_nodes=TSP_SIZE, batch_size=TEST_BATCH_SIZE)
 
-    for data in test_loader:
+    for data,_ in test_loader:
         # data.shape = (batch_s, TSP_SIZE, 2)
         batch_s = data.size(0)
 
@@ -100,4 +100,5 @@ def EVAL(actor_group, epoch, timer_start, logger):
     logger.info('--------------------------------------------------------------------------')
     logger.info('--------------------------------------------------------------------------')
     logger.info('--------------------------------------------------------------------------')
+
 
