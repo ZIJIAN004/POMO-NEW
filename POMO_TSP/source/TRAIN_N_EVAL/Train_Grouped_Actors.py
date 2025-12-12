@@ -166,8 +166,8 @@ THE SOFTWARE.
             # RECORDING
             ###############################################
             max_reward, _ = group_reward.max(dim=1)
-            distance_AM.push(-max_reward)  # reward was given as negative dist
-            actor_loss_AM.push(group_loss.detach().reshape(-1))
+            distance_AM_whole.push(-max_reward)  # reward was given as negative dist
+            actor_loss_AM_whole.push(group_loss.detach().reshape(-1))
 
 
             # LOGGING
@@ -181,9 +181,13 @@ THE SOFTWARE.
                             distance_AM_partial.result())
                 logger.info(log_str)
                 logger_start = time.time()
-    
+                distance_AM_whole = Average_Meter()
+                actor_loss_AM_whole = Average_Meter()
+                distance_AM_partial = Average_Meter()
+                actor_loss_AM_partial = Average_Meter()
         # LR STEP, after each epoch
         actor_group.lr_stepper.step()
+
 
 
 
