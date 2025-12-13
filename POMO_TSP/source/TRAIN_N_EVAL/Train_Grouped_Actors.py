@@ -80,6 +80,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
             col_unsqueezed = col.unsqueeze(1)
             pre_action = col_unsqueezed.expand(-1, group_s_p)
             group_state_p, reward_p, done_p = env.step(pre_action)
+            actor_group.update(group_state_p)
     
         # First Move is given
         first_action = ref[:, (ref.size(1)//2) : -1] #这个firstmove的逻辑就需要修改了
@@ -187,6 +188,7 @@ def TRAIN(actor_group, epoch, timer_start, logger):
             actor_loss_AM_partial = Average_Meter()
     # LR STEP, after each epoch
     actor_group.lr_stepper.step()
+
 
 
 
